@@ -9,8 +9,10 @@ import scrapy
 
 
 class LineItem(scrapy.Item):
-    character = scrapy.Field()
-    episode = scrapy.Field()
-    line = scrapy.Field()
-    season = scrapy.Field()
+    conversation = scrapy.Field()
+    url = scrapy.Field()
+    # character = scrapy.Field()
+    # episode = scrapy.Field()
+    # line = scrapy.Field()
+    # season = scrapy.Field()
 

@@ -19,7 +19,7 @@ def clean(s):
 def extract_conversation(element):
     """Return list of character-line pairs from element."""
     element_strs = list(element.strings)
-    conversation = list(filter(lambda s: s != '\n', element_strs))
+    conversation = list(filter(lambda s: '\n' not in s, element_strs))
     cleaned = list(map(clean, conversation))
     lines = [(cleaned[i], cleaned[i + 1]) for i in range(0, len(cleaned), 2)]
 
@@ -37,22 +37,26 @@ class OfficeSpider(scrapy.Spider):
     name = 'office_crawler'
     allowed_domains = ['officequotes.net']
     start_urls = [
-        'http://officequotes.net/no1-01.php'
+        'http://officequotes.net/index.php'
     ]
 
+    # start at home page and retrieve links, parse linked pages with parse_quotes
     def parse(self, response):
+        links = response.xpath('//a[contains(@href, "no")]/@href').extract()
+        for link in links:
+            url = "http://officequotes.net/" + link
+            yield scrapy.Request(url, callback=self.parse_quotes)
+
+    # define what to output at each page
+    def parse_quotes(self, response):
         soup = BeautifulSoup(response.text, 'lxml')
-        all_quotes = soup.find_all('div', class_='quote')
+        all_quotes = soup.find_all('div', class_='quote')  # retrieve all div elements with tag 'quote'
         current_url = response.request.url
-        season_ep = extract_season_episode(current_url)
-        lines = []
-        for element in all_quotes:
-            for pair in extract_conversation(element):
-                item = LineItem(
-                    character=str(pair[0]),
-                    line=str(pair[1]),
-                    season=season_ep[0],
-                    episode=season_ep[1]
-                )
-                lines.append(item)
-        return lines
+        items = []
+        for quote in all_quotes:
+            item = LineItem(
+                conversation=quote.contents,
+                url=current_url
+            )
+            items.append(item)
+        return items
