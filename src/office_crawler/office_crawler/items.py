@@ -7,12 +7,8 @@
 
 import scrapy
 
-
 class LineItem(scrapy.Item):
     conversation = scrapy.Field()
     url = scrapy.Field()
-    # character = scrapy.Field()
-    # episode = scrapy.Field()
-    # line = scrapy.Field()
-    # season = scrapy.Field()
+
 
