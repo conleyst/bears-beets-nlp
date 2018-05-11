@@ -1,0 +1,6 @@
+### Source Directory
+
+This directory contains all code used in the project.
+
+- `clean_lines.py`<br/>
+Contains the script used to clean the raw JSON

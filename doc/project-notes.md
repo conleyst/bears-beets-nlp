@@ -6,66 +6,14 @@
 - I can get the links in a list using the xpath `response.xpath('//a[contains(@href, "no")]/@href').extract()`. Takes advantage of the fact that no other element with the `a` tag has an `href` attribute containing the string `no`.
     - If I'm starting at 1-1, then should use `response.xpath('//a[contains(@href, "no")]/@href').extract()[1:]` so I don't revisit the same page twice.
 
+### Working with raw data
 
-#### Creating the Crawler With Scrapy
+- issue is that the conversation parts of the data retrieved aren't in the order of character -- character-line. If there were tags within the character line (e.g. italics), then the line is now broken over multiple entries in the list.
+    - if `lines` is the json output loaded, then `lines[3]['conversation']` fives an example of a line by Pam that's broken over multiple lines
+- considered writing a script to try and recognize names, count lines, and concatenate those that are really a single line, but I don't know how many breaks there could be, there could be one-off names, etc. Instead decided to just collapse everything together and then split use regex `((\w+):)`. Split a line at the largest collection letters that precede a colon `:` and that themselves are preceded by punctuation or a special character. Relies on the fact that all sentences seem to have proper punctuation after them.
+    - Get names with `(\w+:)`
+    - actually this doesn't work if there's a space and it seems like not all lines end with punctuation. It does look like all names start with a capital though, so now using regex `([A-Z][\w+\s]*:)`
+    - still doesn't work! It's too lenient. It matches words preceding the first word if there's no punctuation. Creating a lot of weird df issues. Using `([A-Z](?:[a-z]+\s[A-Z])*[a-z]+:)` seems to work. Looks for longest string of characters with the pattern capitalized word-space (repeating), all followed by :
 
-There's a nice outline of all of this in the scrapy documentation [here](https://doc.scrapy.org/en/0.10.3/intro/tutorial.html), and that's where I'm drawing a lot of this from.
-
-The general strategy for a web crawler is:
-
-1. Set-up the project structure
-2. Define the actual items you want to return
-3. Create the spider and define how it will parse a single page
-4. Create the item pipeline
-5. Define how your spider should follow links
-
-##### Create the Folder Structure
-
-- Scrapy will initialize everything using the command `scrapy startproject <project_name>` from within the directory where you want the crawler files to be stored. Created mine with `scrapy startproject office_crawler`.
-
-##### Create the Item to be returned
-
-- Ignore for now the sctual crawling from page to page. Once we're on a page, we're going to select the things that we want (the lines) using BeautifulSoup, and we're going to store the lines in a csv, along with the characters who said them, and the season and episode the line is from.
-- For convenience, scrapy has a notion of an item, and items are what is actually returned.  Think of items as a specific example from the broader class of what you want to return. For example, we're looking for lines said by characters in the office, so one of the items we want our scraper to return is,
-
-    > ("No you cannot. It has to be official, and it has to be urine.", "Dwight", 2, 20)
-
-    This is a line that Dwight says in the 20th episode of season two and it's going to be one of the lines returned by the web crawler we're creating. Using a tuple here as the format is somewhat arbitrary, which is why we use items. Items standardize the way that info will be returned. Items are implemented as a class, and every line is going to be an instance of the class. Each of those entries in the tuple above will be a class attribute. The item class we'll create is basic, but if you want a refresher on Python classes, a nice source is @@here@@. We'll call the class `LineItem` and add the following to `items.py`,
-
-    ```{python}
-    from scrapy.item import Item, Field
-
-    class LineItem(Item):
-        self.line = Field()
-        self.character = Field()
-        self.season = Field()
-        self.episode = Field()
-    ```
-
-    You can read more about items in the [scrapy documentation](https://doc.scrapy.org/en/latest/topics/items.html).
-
-#### Create the Spider
-
-- Still focusing on one page and not traversing the website.
-- The spider is the thing that actually crawls around the website, going to links that we specify and deploying the BeautifulSoup code that we're going to write to parse the HTML there.
-- The spider we're creating is defined as a class (specifically, as a subclass of the `BaseSpider` class in scrapy). When we want to send our crawler out to explore a website, we do so with an instance of the defined class. In defining the class, we need to give it:
-    1.  `name`: Spiders need a unique name. We'll use this name to call it from the shell.
-    2. `start_url`: A list of URLs to start the crawler at
-    2. `parse()` method: When the spider attempts to connect to a webpage, it needs some way to parse the response that it gets. This method is what it uses. Ours is going to contain the BeautifulSoup code that extracts the lines and info we want and returns them in the form of a `LineItem`.
-
-
-    ```{python}
-    from scrapy.spider import BaseSpider
-
-    class OfficeSpider(BaseSpider):
-        name = 'office_spider'
-        allowed_url = 'http://officequotes.net'
-        start_url = ['http://officequotes.net/no1-01.php']
-
-        def parse(self, response):
-            ...
-    ```
-- Websites are all different. This means that depending on what you're going to have to spend some time looking at the page HTML in order to figure out exactly how you can pull out the info you're interested in. There is no universal way, and if the page layout changes, then you'll probably need to rewrite your crawler. You can specify specific elements in the page using CSS or XPath. By inspecting the HTML for the pages we're interested in, we can see that the lines are all contained in elements within the page with the tag `<div class='quote'>` and it looks like only the quotes have this tag. We can get all of them with BeautifulSoup.
-- Parse a given page and extract the quotes using the code
-- to write to csv, use `scrapy crawl <spider name> -o file.csv -t csv`
-- in settings, set `DOWNLOAD_DELAY=1`. Waits a second before requesting a new page.
+- there are some quote boxes on the website that are empty (e.g. 6-20). Only three though so I could manually remove them?
+    - ended up using a try/except statement. If IndexError, then return an empty list. More philosophically in line with what the function does.
