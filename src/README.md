@@ -9,10 +9,10 @@ Contains all code used to scrape the data from [here](http://officequotes.net/in
     scrapy crawl office_crawler -o raw_lines.json
     ```
 
-    This will return a JSON file in the same directory containing the results.
+    This will return a JSON file in the same directory.
 
 - `clean_lines.py`<br/>
-Contains the script used to clean the raw JSON returned by the web-crawler. Should be run from the `src` directory and expects that the output from the crawler is in the `data` directory. Can be run using the command,
+Contains the script used to clean the raw JSON returned by the web crawler. Should be run from the `src` directory and expects that the output from the crawler is in the `data` directory. Can be run using the command,
 
     ```
     python clean_lines.py
