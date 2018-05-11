@@ -74,13 +74,15 @@ def create_df(scraped_json):
     return df
 
 
-# import raw json
-with open('../data/raw_lines.json', 'r') as f:
-    lines = json.load(f)
+if __name__ == '__main__':
 
-# create df
-script_df = create_df(lines)
-script_df = script_df.sort_values(['season', 'episode'])
+    # import raw json
+    with open('../data/raw_lines.json', 'r') as f:
+        lines = json.load(f)
 
-# export to pickle
-script_df.to_csv("../data/lines.csv", index=False)
+    # create df
+    script_df = create_df(lines)
+    script_df = script_df.sort_values(['season', 'episode'])
+
+    # export to pickle
+    script_df.to_csv("../data/lines.csv", index=False)
