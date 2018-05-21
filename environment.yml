@@ -13,3 +13,4 @@ dependencies:
 - beautifulsoup4=4.6.0
 - jupyterlab=0.32.1
 - lxml=4.2.1
+- seaborn=0.8.1
