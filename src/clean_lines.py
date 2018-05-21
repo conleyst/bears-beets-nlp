@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+
 import pandas as pd
 import json
 import re
@@ -9,7 +11,7 @@ def speaker_line_format(conversation):
     """Turn list of strings into a list of tuples of the form (character, character-line).
 
     Args:
-        conversation_string: list of strings
+        conversation: list of strings
     Returns a list of tuples containing character -- character-line pairs.
     """
 
