@@ -17,8 +17,8 @@ test_df.character = test_df.character.apply(lambda x: char_dict[x])
 
 # create bag-of-words representation of the features
 print("Creating a bag-of-words representation of the training data...")
-vectorizer = CountVectorizer(lowercase=True, stop_words='english')
-vectorizer.fit(train_df.line.tolist())  # train the vectorizer on the lines from the training set
+vectorizer = CountVectorizer(lowercase=True)
+vectorizer.fit(train_df.line.tolist())  # train the vectorizer on the lines from the training set to make vocabulary
 
 X_train = vectorizer.transform(train_df.line.tolist())  # transform training lines as BOW
 X_test = vectorizer.transform(test_df.line.tolist())  # transform test lines as BOW
