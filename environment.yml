@@ -14,3 +14,4 @@ dependencies:
 - jupyterlab=0.32.1
 - lxml=4.2.1
 - seaborn=0.8.1
+- gensim=3.4.0
