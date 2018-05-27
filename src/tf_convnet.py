@@ -18,12 +18,12 @@ df_test = pd.read_csv("../data/test.csv")
 
 pad_sym = ''
 batch_size = 63
-filter_sizes = [2, 3, 4]
-n_filters = 150
+filter_sizes = [3, 4, 5]
+n_filters = 100
 n_epochs = 50
 
 
-# preprocess data into form suitable for convnet
+# process data into form suitable for convnet
 def tokenize_trunc_pad(dataframe, pad_sym, max_len=48):
     """Tokenize list, truncate if llonger than 48, pad to length 48 if shorter."""
 
@@ -115,6 +115,7 @@ with graph.as_default():
     # define inputs
     lines = tf.placeholder(tf.int32, name='lines')
     lines_labels = tf.placeholder(tf.float32, name='lines_labels')
+    keep_prob = tf.placeholder(tf.float32, name='keep_prob')  # to control drop out for training/prediction
 
     # define embeddings layer
     embeddings = tf.Variable(initial_value=embedding_matrix, trainable=True, name='embeddings')
@@ -134,15 +135,15 @@ with graph.as_default():
     concat_output = tf.reshape(tensor=concat_output, shape=[-1, 3 * n_filters])
 
     # make fully connected layer w/ dropout
-    dropout = tf.nn.dropout(concat_output, keep_prob=0.5)
+    dropout = tf.nn.dropout(concat_output, keep_prob=keep_prob)
     fc_weights = tf.Variable(tf.truncated_normal(shape=[3 * n_filters, n_chars]),
                              name='fc_weights')
     fc_bias = tf.Variable(tf.zeros(shape=[n_chars]), name='fc_bias')
     logits = tf.matmul(dropout, fc_weights) + fc_bias
 
     # prediction and loss
-    prediction_probs = tf.nn.softmax(logits)
-    predictions = tf.argmax(prediction_probs, axis=1)
+    softmax_output = tf.nn.softmax(logits)
+    predictions = tf.argmax(softmax_output, axis=1)
     accuracy = tf.metrics.accuracy(tf.argmax(lines_labels, axis=1), predictions, name='accuracy')
     loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=lines_labels))
     optimizer = tf.train.AdamOptimizer(learning_rate=0.001).minimize(loss)
@@ -167,15 +168,24 @@ with tf.Session(graph=graph) as sess:
             X_batch = X_train[batch * batch_size:(batch + 1) * batch_size]
             y_batch = y_train[batch * batch_size:(batch + 1) * batch_size]
 
-            feed_dict = {lines: X_batch, lines_labels: y_batch}
-            _, batch_loss, batch_predictions = sess.run([optimizer, loss, prediction_probs], feed_dict=feed_dict)
+            feed_dict = {lines: X_batch, lines_labels: y_batch, keep_prob: 0.5}
+            _, batch_loss = sess.run([optimizer, loss], feed_dict=feed_dict)
 
-        _, train_accuracy = sess.run(accuracy, feed_dict={lines: X_train, lines_labels: y_train})
+        _, train_accuracy = sess.run(accuracy, feed_dict={lines: X_train, lines_labels: y_train, keep_prob: 1})
         print("Training accuracy after epoch {}: {}".format(epoch, train_accuracy))
 
         if epoch % 10 == 0:  # get test accuracy every 10 epochs
-            _, test_accuracy = sess.run(accuracy, feed_dict={lines: X_test, lines_labels: y_test})
+            _, test_accuracy = sess.run(accuracy, feed_dict={lines: X_train, lines_labels: y_train, keep_prob: 1})
             print("Test accuracy after epoch {}: {}".format(epoch, test_accuracy))
 
-    saver.save(sess, save_path="../results/convnet-50")
+    # view training accuracy of trained model
+    _, test_accuracy = sess.run(accuracy, feed_dict={lines: X_train, lines_labels: y_train, keep_prob: 1})
+    print("Final test accuracy of trained model is {}".format(test_accuracy))
+    saver.save(sess, save_path="../results/convnet/convnet-50")
+
+    # save softmax output for training and test set
+    train_softmax_array = sess.run(softmax_output, feed_dict={lines:X_train, keep_prob: 1})
+    test_softmax_array = sess.run(softmax_output, feed_dict={lines: X_train, keep_prob: 1})
+    np.save("../results/convnet/train_softmax", train_softmax_array)
+    np.save("../results/convnet/test_softmax", test_softmax_array)
 
