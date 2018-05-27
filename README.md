@@ -4,6 +4,16 @@ This repository contains all data, code, and results used to scrape data and cre
 
 The models used include a random forest model using a bag-of-words model for text, logistic regression using tf-idf features, and a convolutional neural net as described in the paper [here](https://arxiv.org/abs/1408.5882), implemented in `tensorflow`. For the convnet, embeddings were learned, but were initialized as previously learned, existing Glove embeddings. The data downloaded for the Glove embeddings was the file `glove.6B.zip` from [here](https://nlp.stanford.edu/projects/glove/), and the 100-dimensional embeddings were used.
 
+I wrote a series of blog posts on the project, which can be found below:
+
+- [Part 1: Scraping The Office Script with Scrapy and BeautifulSoup](https://conleyst.github.io/2018-05-21-scraping-data/)
+
+- [Part 2: Cleaning the Data and Exploratory Data Analysis](https://conleyst.github.io/2018-05-22-clean-eda/)
+
+- [Part 3: Bag-Of-Words, Random Forest, TFIDF, and Logistic Regression](https://conleyst.github.io/2018-05-23-random-forest-log-reg/)
+
+- [Part 4: Glove Embeddings and a Convolutional Neural Net for Text Classification](https://conleyst.github.io/2018-05-26-convnet/)
+
 ### Project Structure
 
 The project is contained in:
